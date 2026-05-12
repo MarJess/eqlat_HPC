@@ -40,10 +40,9 @@ echo "============================================"
 
 # ---------- Environment ----------
 module purge
-module load python/3.10.8
 
 source /work2/noaa/co2/miniconda3/etc/profile.d/conda.sh
-conda activate ccgg
+conda activate e5
 
 # Now enable strict unset-variable checking (after conda, which uses unset vars)
 set -u
