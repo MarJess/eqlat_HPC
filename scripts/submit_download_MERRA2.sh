@@ -48,11 +48,8 @@ conda activate ccgg
 # Now enable strict unset-variable checking (after conda, which uses unset vars)
 set -u
 
-# ---------- Paths ----------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 # ---------- Run ----------
-python "${SCRIPT_DIR}/download_MERRA_2_new.py" "$YEAR" --outdir "$OUTDIR"
+python "${HOME}/eqlat_HPC/scripts/download_MERRA_2_new.py" "$YEAR" --outdir "$OUTDIR"
 
 echo ""
 echo "============================================"

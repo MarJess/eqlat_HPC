@@ -48,11 +48,8 @@ conda activate e5
 # Now enable strict unset-variable checking (after conda, which uses unset vars)
 set -u
 
-# ---------- Paths ----------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 # ---------- Run ----------
-python "${SCRIPT_DIR}/download_ERA_5.py" "$YEAR" --outdir "$OUTDIR"
+python "${HOME}/eqlat_HPC/scripts/download_ERA_5.py" "$YEAR" --outdir "$OUTDIR"
 
 echo ""
 echo "============================================"
