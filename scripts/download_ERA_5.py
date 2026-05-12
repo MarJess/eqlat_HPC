@@ -88,4 +88,53 @@ def download_era5_pv_pressure(year, month, day, pressure_levels=None,
         print(f"ERA5 PV (pressure levels) for {year}-{month:02d}-{day:02d} already exists.")
 
     return filepath
+
+
+# ---------------------------------------------------------------------------
+#  CLI entry point
+# ---------------------------------------------------------------------------
+def main():
+    """Download ERA5 PV for every day in a given year."""
+    import calendar
+
+    parser = argparse.ArgumentParser(
+        description="Download ERA5 PV on pressure levels for a full year."
+    )
+    parser.add_argument("year", type=int, help="Year to download, e.g. 2023")
+    parser.add_argument(
+        "--outdir", type=str,
+        default=os.environ.get("DATA", ".") + "/ERA5",
+        help="Output directory (default: $DATA/ERA5)"
+    )
+    parser.add_argument(
+        "--hours", nargs="+", default=["00:00"],
+        help="UTC hours to download (default: 00:00)"
+    )
+    args = parser.parse_args()
+
+    year = args.year
+    outdir = args.outdir
+    os.makedirs(outdir, exist_ok=True)
+
+    print(f"=== ERA5 download for year {year} ===")
+    print(f"    Output directory: {outdir}")
+    print(f"    Hours: {args.hours}")
+
+    for month in range(1, 13):
+        ndays = calendar.monthrange(year, month)[1]
+        for day in range(1, ndays + 1):
+            try:
+                download_era5_pv_pressure(
+                    year, month, day,
+                    outdir=outdir,
+                    hours=args.hours,
+                )
+            except Exception as e:
+                print(f"  ERROR {year}-{month:02d}-{day:02d}: {e}")
+
+    print(f"=== Finished ERA5 download for {year} ===")
+
+
+if __name__ == "__main__":
+    main()
     
