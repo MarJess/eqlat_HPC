@@ -1,10 +1,12 @@
 #!/bin/bash
+#SBATCH --account=co2
+#SBATCH --qos=batch
 #SBATCH --job-name=dl_ERA5
 #SBATCH --partition=orion
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=4G
-#SBATCH --time=24:00:00
+#SBATCH --mem=10G
+#SBATCH --time=08:00:00
 #SBATCH --output=/work2/noaa/co2/jesswein/logs/%x_%j.out
 #SBATCH --error=/work2/noaa/co2/jesswein/logs/%x_%j.err
 #SBATCH --mail-type=END,FAIL
