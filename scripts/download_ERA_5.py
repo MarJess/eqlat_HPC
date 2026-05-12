@@ -45,12 +45,14 @@ def download_era5_pv_pressure(year, month, day, pressure_levels=None,
     os.makedirs(outdir, exist_ok=True)
 
     if hours is None:
-        hours = ["00:00"]
+        hours = [f"{h:02d}:00" for h in range(24)]
 
     if pressure_levels is None:
         pressure_levels = [
             1, 2, 3, 5, 7, 10, 20, 30, 50, 70, 100,
-            125, 150, 175, 200, 225, 250, 300, 325, 350
+            125, 150, 175, 200, 225, 250, 300, 325, 350, 
+            400, 450, 500, 550, 600, 650, 700, 750, 775, 
+            800, 825, 850, 875, 900, 926, 950, 975, 1000
         ]
 
     filename = (f"era5_pv_pressure_{year:04d}{month:02d}{day:02d}.nc")
@@ -107,8 +109,9 @@ def main():
         help="Output directory (default: $DATA/ERA5)"
     )
     parser.add_argument(
-        "--hours", nargs="+", default=["00:00"],
-        help="UTC hours to download (default: 00:00)"
+        "--hours", nargs="+",
+        default=[f"{h:02d}:00" for h in range(24)],
+        help="UTC hours to download (default: all 24 hours)"
     )
     args = parser.parse_args()
 
