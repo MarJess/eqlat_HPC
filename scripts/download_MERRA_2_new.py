@@ -356,3 +356,61 @@ def download_merra2_date_range(start_date, end_date, hours_utc=None,
         outfiles.append(f)
         current += timedelta(days=1)
     return outfiles
+
+
+# ---------------------------------------------------------------------------
+#  CLI entry point
+# ---------------------------------------------------------------------------
+def main():
+    """Download MERRA-2 EPV and T for every day in a given year."""
+    import argparse
+    import calendar
+
+    parser = argparse.ArgumentParser(
+        description="Download MERRA-2 PV and T on pressure levels for a full year."
+    )
+    parser.add_argument("year", type=int, help="Year to download, e.g. 2023")
+    parser.add_argument(
+        "--outdir", type=str,
+        default=os.environ.get("DATA", ".") + "/MERRA2",
+        help="Output directory (default: $DATA/MERRA2)"
+    )
+    parser.add_argument(
+        "--collection", type=str, default="M2I3NPASM",
+        choices=list(COLLECTION_INFO.keys()),
+        help="MERRA-2 collection (default: M2I3NPASM, 3-hourly)"
+    )
+    parser.add_argument(
+        "--variables", nargs="+", default=["EPV", "T"],
+        help="Variables to download (default: EPV T)"
+    )
+    args = parser.parse_args()
+
+    year   = args.year
+    outdir = args.outdir
+    os.makedirs(outdir, exist_ok=True)
+
+    print(f"=== MERRA-2 download for year {year} ===")
+    print(f"    Collection : {args.collection}")
+    print(f"    Variables  : {args.variables}")
+    print(f"    Output dir : {outdir}")
+
+    for month in range(1, 13):
+        ndays = calendar.monthrange(year, month)[1]
+        for day in range(1, ndays + 1):
+            try:
+                download_merra2(
+                    year, month, day,
+                    hours_utc=None,       # all time steps
+                    variables=args.variables,
+                    collection=args.collection,
+                    outdir=outdir,
+                )
+            except Exception as e:
+                print(f"  ERROR {year}-{month:02d}-{day:02d}: {e}")
+
+    print(f"=== Finished MERRA-2 download for {year} ===")
+
+
+if __name__ == "__main__":
+    main()
