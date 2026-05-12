@@ -43,7 +43,7 @@ module purge
 module load python/3.10.8
 
 source /work2/noaa/co2/miniconda3/etc/profile.d/conda.sh
-conda activate e5
+conda activate ccgg
 
 # Now enable strict unset-variable checking (after conda, which uses unset vars)
 set -u
