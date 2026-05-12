@@ -43,7 +43,7 @@ module purge
 module load python/3.10.8
 
 source /work2/noaa/co2/miniconda3/etc/profile.d/conda.sh
-conda activate ccgg
+conda activate e5
 
 # ---------- Paths ----------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
