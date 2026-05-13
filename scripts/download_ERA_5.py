@@ -105,8 +105,8 @@ def main():
     parser.add_argument("year", type=int, help="Year to download, e.g. 2023")
     parser.add_argument(
         "--outdir", type=str,
-        default=os.environ.get("DATA", ".") + "/ERA5",
-        help="Output directory (default: $DATA/ERA5)"
+        default=os.environ.get("DATA", ".") + "/ERA5_12UTC",
+        help="Output directory (default: $DATA/ERA5_12UTC)"
     )
     parser.add_argument(
         "--hours", nargs="+",
