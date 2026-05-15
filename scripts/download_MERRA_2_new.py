@@ -384,15 +384,22 @@ def main():
         "--variables", nargs="+", default=["EPV", "T"],
         help="Variables to download (default: EPV T)"
     )
+    parser.add_argument(
+        "--hours", nargs="+", type=float, default=None,
+        help="UTC hours to download (default: all time steps). "
+             "E.g. --hours 12 for 12 UTC only, or --hours 0 6 12 18"
+    )
     args = parser.parse_args()
 
     year   = args.year
     outdir = args.outdir
     os.makedirs(outdir, exist_ok=True)
 
+    hours_str = "all" if args.hours is None else f"{args.hours} UTC"
     print(f"=== MERRA-2 download for year {year} ===")
     print(f"    Collection : {args.collection}")
     print(f"    Variables  : {args.variables}")
+    print(f"    Hours      : {hours_str}")
     print(f"    Output dir : {outdir}")
 
     for month in range(1, 13):
@@ -401,7 +408,7 @@ def main():
             try:
                 download_merra2(
                     year, month, day,
-                    hours_utc=None,       # all time steps
+                    hours_utc=args.hours,
                     variables=args.variables,
                     collection=args.collection,
                     outdir=outdir,
