@@ -5,7 +5,7 @@
 #SBATCH --partition=orion
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=40G
+#SBATCH --mem=10G
 #SBATCH --time=08:00:00
 #SBATCH --output=/work2/noaa/co2/jesswein/logs/%x_%A_%a.out
 #SBATCH --error=/work2/noaa/co2/jesswein/logs/%x_%A_%a.err
@@ -62,7 +62,7 @@ echo "  Started    : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 echo "============================================"
 
 # ---------- Environment ----------
-module purge
+#module purge
 
 source /work2/noaa/co2/miniconda3/etc/profile.d/conda.sh
 conda activate ccgg
