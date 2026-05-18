@@ -40,10 +40,10 @@ MODEL=${1:?  "ERROR: Model argument required (ERA5 or MERRA2)."}
 
 if [ "$MODEL" == "ERA5" ]; then
     INDIR=${2:-${DATA:-/work2/noaa/co2/jesswein/data}/ERA5_12UTC}
-    OUTDIR=${3:-${RESULTS:-/work2/noaa/co2/jesswein/results}/eqlat_ERA5}
+    OUTDIR=${3:-${RESULTS:-/work2/noaa/co2/jesswein/results}/eqlat_ERA5_12UTC}
 elif [ "$MODEL" == "MERRA2" ]; then
     INDIR=${2:-${DATA:-/work2/noaa/co2/jesswein/data}/MERRA2_12UTC}
-    OUTDIR=${3:-${RESULTS:-/work2/noaa/co2/jesswein/results}/eqlat_MERRA2}
+    OUTDIR=${3:-${RESULTS:-/work2/noaa/co2/jesswein/results}/eqlat_MERRA2_12UTC}
 else
     echo "ERROR: Model must be ERA5 or MERRA2, got: $MODEL"
     exit 1
