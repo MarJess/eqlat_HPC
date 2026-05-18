@@ -56,7 +56,7 @@ echo "  Started    : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 echo "============================================"
 
 # ---------- Environment ----------
-#source /work2/noaa/co2/miniconda3/etc/profile.d/conda.sh
+source /work2/noaa/co2/miniconda3/etc/profile.d/conda.sh
 conda activate /work2/noaa/co2/jesswein/conda_envs/ccgg_clone
 
 set -u
