@@ -4,7 +4,7 @@
 #SBATCH --job-name=eqlat
 #SBATCH --partition=orion
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=10G
 #SBATCH --time=08:00:00
 #SBATCH --output=/work2/noaa/co2/jesswein/logs/%x_%j.out
