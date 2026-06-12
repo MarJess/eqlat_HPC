@@ -92,43 +92,82 @@ eqlat, o3_ref = equivalent_latitude_swoosh_new(
 )
 ```
 
-## Scripts
+## Source Modules
 
-| Script | Description |
+| Module | Description |
 |---|---|
-| `scripts/download_ERA_5.py` | Download ERA5 PV + temperature from CDS |
-| `scripts/download_MERRA_2_new.py` | Download MERRA-2 PV + temperature |
-| `scripts/merge_reanalysis.py` | Merge reanalysis files |
-| `scripts/process_fields.py` | Batch compute equivalent latitude fields |
+| `src/download/download_ERA_5.py` | Download ERA5 PV + temperature from CDS |
+| `src/download/download_MERRA_2_new.py` | Download MERRA-2 EPV + temperature via earthaccess |
+| `src/download/download_mls.py` | Download MLS (Microwave Limb Sounder) ozone profiles |
+| `src/download/download_ozonesondes.py` | Download ozonesonde data |
+| `src/utils/merge_reanalysis.py` | Merge reanalysis files |
+| `src/utils/process_fields.py` | Batch compute equivalent latitude fields |
+| `src/analysis/reanalysis_stats.py` | Seasonal bias & RMSD between ERA5 and MERRA-2 eqlat |
 
 ### Batch processing from the command line
 
 ```bash
-python scripts/process_fields.py \
+python src/utils/process_fields.py \
     --indir  /data/era5/pv \
     --outdir /data/era5/eqlat \
     --model  ERA5 \
     --roi
 ```
 
+## SLURM Jobs (Orion)
+
+Submit scripts in `jobs/` are configured for the `co2` account on the `orion` partition.
+
+| Script | Description |
+|---|---|
+| `jobs/submit_download_ERA5.sh` | Download ERA5 for a given year: `sbatch submit_download_ERA5.sh 2023` |
+| `jobs/submit_download_MERRA2.sh` | Download MERRA-2 for a given year: `sbatch submit_download_MERRA2.sh 2023` |
+| `jobs/submit_process_eqlat.sh` | Compute eqlat fields (both piecewise + ROI, skips existing files) |
+| `jobs/submit_reanalysis_stats.sh` | Compute seasonal bias & RMSD between ERA5 and MERRA-2 |
+
+## Notebooks
+
+| Notebook | Description |
+|---|---|
+| `notebooks/00_anel_figures.ipynb` | Reproduce figures from Añel et al. (2013) |
+| `notebooks/01_analytic_eqlat_comparison.ipynb` | Validate methods against analytic solutions |
+| `notebooks/02_reanalysis_comparison.ipynb` | ERA5 vs. MERRA-2 eqlat comparison |
+| `notebooks/03_ozone_satellite_comparison.ipynb` | Eqlat comparison with ozone satellite data |
 
 ## Package Structure
 
 ```
-eqlat/
-├── eqlat/
-│   ├── piecewise.py      # piecewise-constant method
-│   ├── roi_fast.py       # ROI method (contourpy-based)
-│   ├── swoosh.py         # SWOOSH ozone method
-│   ├── interpolation.py  # pressure → isentropic interpolation
-│   ├── batch.py          # NetCDF batch processing
-│   └── utils.py          # grid-cell areas, coordinate helpers
-├── scripts/
-    ├── download_ERA_5.py
-    ├── download_MERRA_2_new.py
-    ├── merge_reanalysis.py
-    └── process_fields.py
-
+eqlat_HPC/
+├── src/
+│   ├── eqlat/
+│   │   ├── piecewise.py      # piecewise-constant method
+│   │   ├── roi_fast.py       # ROI method (contourpy-based)
+│   │   ├── swoosh.py         # SWOOSH ozone method
+│   │   ├── interpolation.py  # pressure → isentropic interpolation
+│   │   ├── batch.py          # NetCDF batch processing
+│   │   └── utils.py          # grid-cell areas, coordinate helpers
+│   ├── download/
+│   │   ├── download_ERA_5.py
+│   │   ├── download_MERRA_2_new.py
+│   │   ├── download_mls.py
+│   │   └── download_ozonesondes.py
+│   ├── analysis/
+│   │   └── reanalysis_stats.py
+│   └── utils/
+│       ├── merge_reanalysis.py
+│       └── process_fields.py
+├── jobs/
+│   ├── submit_download_ERA5.sh
+│   ├── submit_download_MERRA2.sh
+│   ├── submit_process_eqlat.sh
+│   └── submit_reanalysis_stats.sh
+├── notebooks/
+│   ├── 00_anel_figures.ipynb
+│   ├── 01_analytic_eqlat_comparison.ipynb
+│   ├── 02_reanalysis_comparison.ipynb
+│   └── 03_ozone_satellite_comparison.ipynb
+├── README.md
+└── LICENSE
 ```
 
 ## Reference
