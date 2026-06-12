@@ -1,0 +1,22 @@
+# Data directories
+data/
+*/data/
+
+# Large data file formats
+*.nc
+*.nc4
+*.h5
+*.hdf
+*.hdf5
+*.grib
+*.grb
+*.grb2
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
