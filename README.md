@@ -184,6 +184,44 @@ eqlat_HPC/
 └── LICENSE
 ```
 
+## Data Release
+
+Pre-computed equivalent latitude fields for ERA5 and MERRA-2 may are archived on Zenodo:
+
+[![DOI](https://zenodo.org/badge/1237033987.svg)](https://doi.org/10.5281/zenodo.20706430)
+
+### Contents
+
+| Dataset | Period | Levels | Method | Format |
+|---|---|---|---|---|
+| ERA5 eqlat | 2023–2025 | 320–800 K (10 isentropes) | ROI + piecewise | NetCDF-4 |
+| MERRA-2 eqlat | 2023–2025 | 320–800 K (10 isentropes) | ROI + piecewise | NetCDF-4 |
+
+### Download
+
+```bash
+# Install required package
+pip install zenodo-get
+
+# Download all files (≈ XX GB)
+zenodo_get 10.5281/zenodo.20706430
+```
+
+Or download individual files directly from the [Zenodo record](https://doi.org/10.5281/zenodo.20706430).
+
+### File naming convention
+
+```
+{MODEL}_eqlat_{METHOD}_{YEAR}.nc
+# e.g. ERA5_eqlat_roi_2005.nc
+```
+
+Each file contains variables `eqlat` and `eqlat_pw` (ROI and piecewise, respectively) on a `(time, theta, lat, lon)` grid, along with `pv_thresholds` used for each level.
+
+### Citation
+
+If you use the released dataset, please cite the Zenodo archive in addition to the [software reference](#reference).
+
 ## Reference
 
 Añel JA, Allen DR, Sáenz G, Gimeno L, de la Torre L (2013).  
