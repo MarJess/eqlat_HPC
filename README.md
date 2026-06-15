@@ -1,5 +1,7 @@
 # eqlat_HPC — Equivalent Latitude Computation for NOAA HPC Orion
 
+[![DOI](https://zenodo.org/badge/1237033987.svg)](https://doi.org/10.5281/zenodo.20706430)
+
 A Python package for computing **equivalent latitude** (φ_e) from potential vorticity (PV) fields on isentropic surfaces. Supports ERA5 and MERRA-2 reanalysis data.
 
 ## Background
@@ -22,6 +24,13 @@ A(q₀) = area where PV > q₀
 The ROI method uses contour integration for more accurate area estimation, especially for complex PV distributions with holes or dateline crossings.
 
 
+### Installation
+
+```bash
+conda env create -f environment.yml
+conda activate eqlat
+```
+
 ### Dependencies
 
 ```
@@ -29,9 +38,14 @@ numpy
 xarray
 scipy
 contourpy
-tqdm        	# optional, for progress bars
-cdsapi      	# optional, for ERA5 downloads
-earthaccess 	# optional, for MERRA-2 downloads
+pandas
+netcdf4
+xesmf           # regridding (ERA5 → MERRA-2 grid)
+tqdm            # optional, for progress bars
+cdsapi          # optional, for ERA5 downloads
+earthaccess     # optional, for MERRA-2 downloads
+requests        # optional, for ozonesonde / MERRA-2 HTTP downloads
+beautifulsoup4  # optional, for ozonesonde file-list parsing
 ```
 
 ## Quick Start
@@ -100,14 +114,14 @@ eqlat, o3_ref = equivalent_latitude_swoosh_new(
 | `src/download/download_MERRA_2_new.py` | Download MERRA-2 EPV + temperature via earthaccess |
 | `src/download/download_mls.py` | Download MLS (Microwave Limb Sounder) ozone profiles |
 | `src/download/download_ozonesondes.py` | Download ozonesonde data |
-| `src/utils/merge_reanalysis.py` | Merge reanalysis files |
-| `src/utils/process_fields.py` | Batch compute equivalent latitude fields |
+| `src/calc/merge_reanalysis.py` | Merge reanalysis files |
+| `src/calc/process_fields.py` | Batch compute equivalent latitude fields |
 | `src/analysis/reanalysis_stats.py` | Seasonal bias & RMSD between ERA5 and MERRA-2 eqlat |
 
 ### Batch processing from the command line
 
 ```bash
-python src/utils/process_fields.py \
+python src/calc/process_fields.py \
     --indir  /data/era5/pv \
     --outdir /data/era5/eqlat \
     --model  ERA5 \
@@ -153,7 +167,7 @@ eqlat_HPC/
 │   │   └── download_ozonesondes.py
 │   ├── analysis/
 │   │   └── reanalysis_stats.py
-│   └── utils/
+│   └── calc/
 │       ├── merge_reanalysis.py
 │       └── process_fields.py
 ├── jobs/

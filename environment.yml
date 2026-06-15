@@ -1,0 +1,28 @@
+name: eqlat
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.12
+
+  # Core scientific stack
+  - numpy
+  - scipy
+  - xarray
+  - pandas
+  - netcdf4
+  - contourpy
+  - xesmf          # regridding (ERA5 → MERRA-2 grid)
+
+  # Downloads
+  - earthaccess    # MERRA-2 via NASA Earthdata
+  - cdsapi         # ERA5 via Copernicus CDS
+  - requests       # ozonesonde + MERRA-2 HTTP downloads
+  - beautifulsoup4 # HTML parsing for ozonesonde file lists
+
+  # Optional / utilities
+  - tqdm           # progress bars
+  - ipykernel      # Jupyter notebook support
+  - pip

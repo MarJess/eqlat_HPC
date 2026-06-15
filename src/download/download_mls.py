@@ -4,7 +4,7 @@ import earthaccess
 earthaccess.login(strategy='netrc')
 
 data_dir = Path(__file__).parents[2] / "data"
-mls_dir = data_dir / "satellite" / "mls"
+mls_dir = data_dir / "satellite" 
 
 def download_mls(date1=None, date2=None): 
     """
