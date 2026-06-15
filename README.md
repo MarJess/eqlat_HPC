@@ -186,7 +186,7 @@ eqlat_HPC/
 
 ## Data Release
 
-Pre-computed equivalent latitude fields for ERA5 and MERRA-2 may are archived on Zenodo:
+Pre-computed equivalent latitude fields for ERA5 and MERRA-2 may are archived on Zenodo (not sure if that will actually happen):
 
 [![DOI](https://zenodo.org/badge/1237033987.svg)](https://doi.org/10.5281/zenodo.20706430)
 
