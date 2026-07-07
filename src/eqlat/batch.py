@@ -2,6 +2,35 @@
 Batch processing of equivalent latitude over all time steps and
 isentropic surfaces in a NetCDF file.
 
+Error-handling overview (Bullet points)
+───────────────────────
+- Optional-dependency guards: ``xarray`` and ``tqdm`` are imported inside
+  ``try/except ImportError`` blocks so the module loads without them; a clear
+  ``ImportError`` with an install hint is raised only when a missing library is
+  actually needed, preventing silent failures on minimal environments.
+
+- Auto-detection with explicit fallback: ``_find_dim`` and ``_find_var``
+  try a prioritised list of common variable/dimension names and raise a
+  descriptive ``KeyError`` (listing every name that was tried) when none match,
+  making misconfigured input files immediately diagnosable instead of producing
+  a confusing ``KeyError`` deep in xarray.
+
+- Per-slice exception isolation: each 2-D PV slice is wrapped in a
+  ``try/except`` in both the sequential and parallel code paths; a failed slice
+  emits a ``RuntimeWarning`` and leaves that slice as ``NaN`` rather than
+  aborting the entire multi-hour batch run, so partial results are always
+  recoverable.
+
+- Two-step interpolation guard (``process_pressure_netcdf``): the
+  pressure-to-theta interpolation and the eqlat computation are caught
+  separately, so a numerically ill-conditioned column does not prevent the
+  equivalent-latitude step from running on the remaining columns.
+
+- Planned checks: future work includes a pre-flight validation step that
+  asserts monotonic pressure coordinates, non-empty theta ranges, and finite
+  PV/T values before the main loop, plus a post-run assertion that the fraction
+  of ``NaN`` slices stays below a configurable threshold.
+
 Two workflows
 ─────────────
 1. ``process_netcdf``  –  PV is **already on isentropic levels**
