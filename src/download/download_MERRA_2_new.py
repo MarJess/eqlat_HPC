@@ -412,12 +412,16 @@ def _read_dates_file(path):
     -------
     list of datetime.date
     """
-    import pandas as pd
+    import csv
 
+    date_strs = []
     if path.lower().endswith('.csv'):
-        df = pd.read_csv(path)
-        col = 'date' if 'date' in df.columns else df.columns[0]
-        date_strs = df[col].astype(str).tolist()
+        with open(path, newline='') as fh:
+            reader = csv.DictReader(fh)
+            col = 'date' if (reader.fieldnames and 'date' in reader.fieldnames) \
+                else (reader.fieldnames[0] if reader.fieldnames else None)
+            if col is not None:
+                date_strs = [row[col] for row in reader]
     else:
         with open(path) as fh:
             date_strs = [line.strip() for line in fh if line.strip()]
