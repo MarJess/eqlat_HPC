@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=10G
-#SBATCH --time=1-00:00:00
+#SBATCH --time=08:00:00
 #SBATCH --output=/work2/noaa/co2/jesswein/logs/%x_%j.out
 #SBATCH --error=/work2/noaa/co2/jesswein/logs/%x_%j.err
 #SBATCH --mail-type=END,FAIL
@@ -28,7 +28,9 @@
 #
 #  All three download steps skip files that already exist, so if the job
 #  runs out of walltime it is safe to simply re-submit — it will resume
-#  where it left off.
+#  where it left off. (Time limit kept at 08:00:00 to match the QOS cap
+#  used by the other jobs in this project — a longer --time was rejected
+#  with "Job violates accounting/QOS policy".)
 #
 #  Usage:
 #      sbatch submit_download_ozonesonde_eqlat.sh
