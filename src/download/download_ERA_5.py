@@ -93,16 +93,90 @@ def download_era5_pv_pressure(year, month, day, pressure_levels=None,
 
 
 # ---------------------------------------------------------------------------
+#  Download for an explicit list of dates (e.g. GPS-ozonesonde manifest)
+# ---------------------------------------------------------------------------
+
+def download_era5_for_dates(dates, outdir, pressure_levels=None, hours=None):
+    """
+    Download ERA5 PV on pressure levels for an explicit list of dates.
+
+    Parameters
+    ----------
+    dates : list of datetime.date | (year, month, day) tuples
+    outdir : str
+    pressure_levels : list of int, optional
+    hours : list of str, optional
+
+    Returns
+    -------
+    list of str : filepaths of the downloaded (or already-existing) files.
+    """
+    os.makedirs(outdir, exist_ok=True)
+
+    filepaths = []
+    for d in dates:
+        year, month, day = d if isinstance(d, tuple) else (d.year, d.month, d.day)
+        try:
+            fp = download_era5_pv_pressure(
+                year, month, day,
+                pressure_levels=pressure_levels,
+                outdir=outdir,
+                hours=hours,
+            )
+            filepaths.append(fp)
+        except Exception as e:
+            print(f"  ERROR {year}-{month:02d}-{day:02d}: {e}")
+
+    return filepaths
+
+
+def _read_dates_file(path):
+    """
+    Read a list of dates from a manifest file.
+
+    Accepts either a CSV with a 'date' column (e.g. the GPS-ozonesonde
+    manifest written by download_ozonesondes.py) or a plain text file with
+    one YYYY-MM-DD date per line.
+
+    Returns
+    -------
+    list of datetime.date
+    """
+    import pandas as pd
+    from datetime import datetime as _dt
+
+    if path.lower().endswith('.csv'):
+        df = pd.read_csv(path)
+        col = 'date' if 'date' in df.columns else df.columns[0]
+        date_strs = df[col].astype(str).tolist()
+    else:
+        with open(path) as fh:
+            date_strs = [line.strip() for line in fh if line.strip()]
+
+    return [_dt.strptime(s, "%Y-%m-%d").date() for s in date_strs]
+
+
+# ---------------------------------------------------------------------------
 #  CLI entry point
 # ---------------------------------------------------------------------------
 def main():
-    """Download ERA5 PV for every day in a given year."""
+    """Download ERA5 PV for every day in a given year, or for a list of dates."""
     import calendar
 
     parser = argparse.ArgumentParser(
-        description="Download ERA5 PV on pressure levels for a full year."
+        description="Download ERA5 PV on pressure levels for a full year, "
+                     "or for a specific list of dates via --dates-file."
     )
-    parser.add_argument("year", type=int, help="Year to download, e.g. 2023")
+    parser.add_argument(
+        "year", type=int, nargs="?", default=None,
+        help="Year to download, e.g. 2023 (omit when using --dates-file)"
+    )
+    parser.add_argument(
+        "--dates-file", type=str, default=None,
+        help="CSV with a 'date' column, or a text file with one YYYY-MM-DD "
+             "date per line (e.g. a GPS-ozonesonde manifest). "
+             "Downloads only these dates instead of a full year."
+    )
     parser.add_argument(
         "--outdir", type=str,
         default=os.environ.get("DATA", ".") + "/ERA5_12UTC",
@@ -115,10 +189,24 @@ def main():
     )
     args = parser.parse_args()
 
-    year = args.year
     outdir = args.outdir
     os.makedirs(outdir, exist_ok=True)
 
+    if args.dates_file:
+        dates = _read_dates_file(args.dates_file)
+        print(f"=== ERA5 download for {len(dates)} dates from {args.dates_file} ===")
+        print(f"    Output directory: {outdir}")
+        print(f"    Hours: {args.hours}")
+
+        download_era5_for_dates(dates, outdir, hours=args.hours)
+
+        print(f"=== Finished ERA5 download for {len(dates)} dates ===")
+        return
+
+    if args.year is None:
+        parser.error("Either 'year' or --dates-file must be given.")
+
+    year = args.year
     print(f"=== ERA5 download for year {year} ===")
     print(f"    Output directory: {outdir}")
     print(f"    Hours: {args.hours}")
