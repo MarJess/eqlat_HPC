@@ -2,7 +2,7 @@
 #SBATCH --account=co2
 #SBATCH --qos=batch
 #SBATCH --job-name=dl_o3sonde_eqlat
-#SBATCH --partition=orion
+#SBATCH --partition=service
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=10G
@@ -31,6 +31,13 @@
 #  where it left off. (Time limit kept at 08:00:00 to match the QOS cap
 #  used by the other jobs in this project — a longer --time was rejected
 #  with "Job violates accounting/QOS policy".)
+#
+#  NOTE ON PARTITION: this job uses --partition=service (not orion).
+#  Regular `orion` compute nodes have no outbound internet access — only
+#  the `service` partition runs on front-end/login nodes with external
+#  network connectivity, which is required here for the gml.noaa.gov,
+#  CDS (ERA5), and NASA GES DISC (MERRA-2) HTTP(S) requests. `service`
+#  is capped at 1 core / 24h, which matches this job's resource request.
 #
 #  Usage:
 #      sbatch submit_download_ozonesonde_eqlat.sh
