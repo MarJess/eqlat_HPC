@@ -1,5 +1,6 @@
 import io
 import os
+import time
 
 import numpy as np
 import pandas as pd
@@ -13,6 +14,56 @@ try:
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
+
+
+# NOAA GML's aftp archive (and similar government data servers) will reset
+# the connection ("Remote end closed connection without response") for
+# requests that don't look like a browser, and occasionally under transient
+# load even with a browser UA. A realistic User-Agent + retry-with-backoff
+# works around both.
+_BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+}
+
+
+def _get_with_retry(url, max_retries=5, backoff=2, timeout=60, **kwargs):
+    """
+    GET a URL with a browser-like User-Agent, retrying on connection errors.
+
+    Args:
+        url (str): URL to fetch.
+        max_retries (int): Number of attempts before giving up.
+        backoff (int): Base for exponential backoff between retries (seconds).
+        timeout (int): Per-request timeout in seconds.
+        **kwargs: Passed through to requests.get().
+
+    Returns:
+        requests.Response
+
+    Raises:
+        The last requests.exceptions.ConnectionError if all retries fail.
+    """
+    if not HAS_REQUESTS:
+        raise ImportError("The 'requests' package is required: pip install requests")
+
+    headers = {**_BROWSER_HEADERS, **kwargs.pop("headers", {})}
+
+    last_exc = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            return requests.get(url, headers=headers, timeout=timeout, **kwargs)
+        except requests.exceptions.ConnectionError as e:
+            last_exc = e
+            wait = backoff ** attempt
+            print(f"  Connection error (attempt {attempt}/{max_retries}) for {url}: {e}")
+            print(f"  Retrying in {wait}s...")
+            time.sleep(wait)
+
+    raise last_exc
 
 
 def get_o3_file_paths(url, year=None):
@@ -38,7 +89,8 @@ def get_o3_file_paths(url, year=None):
 
     exts = ('.dat',)
 
-    response = requests.get(url)
+    response = _get_with_retry(url)
+    response.raise_for_status()
     soup = BeautifulSoup(response.text, 'html.parser')
 
     files = [
@@ -140,7 +192,7 @@ def read_noaa_O3_url(base_path, file_name, to_csv=True, o3sonde_dir='.', require
 
     # DOWNLOAD (only happens if file doesn't exist locally)
     full_url = base_path.rstrip('/') + '/' + file_name.lstrip('/')
-    response = requests.get(full_url)
+    response = _get_with_retry(full_url)
     response.raise_for_status()
 
     # PARSE METADATA

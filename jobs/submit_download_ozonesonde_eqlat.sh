@@ -55,6 +55,7 @@ set -eo pipefail
 # ---------- Argument handling ----------
 YEAR_START=${1:-2005}
 YEAR_END=${2:-2025}
+
 O3_URL=${3:-"https://gml.noaa.gov/aftp/data/ozwv/Ozonesonde/Boulder,%20Colorado/Native%20Resolution%20(60s,%207s,%201s)/"}
 
 DATA_ROOT=${DATA:-/work2/noaa/co2/jesswein/data}
