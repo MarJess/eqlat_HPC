@@ -86,34 +86,34 @@ source /work2/noaa/co2/miniconda3/etc/profile.d/conda.sh
 
 # ---------- Step 1: Ozonesonde download (per year) ----------
 # Needs requests, beautifulsoup4, pandas, numpy.
-conda activate ccgg
+#conda activate ccgg
 
-for YEAR in $(seq "$YEAR_START" "$YEAR_END"); do
-    echo ""
-    echo "### Step 1: Ozonesonde download for $YEAR ###"
-    python "${HOME}/eqlat_HPC/src/download/download_ozonesondes.py" \
-        "$YEAR" \
-        --url    "$O3_URL" \
-        --outdir "$O3_OUTDIR"
-done
+#for YEAR in $(seq "$YEAR_START" "$YEAR_END"); do
+#    echo ""
+#    echo "### Step 1: Ozonesonde download for $YEAR ###"
+#    python "${HOME}/eqlat_HPC/src/download/download_ozonesondes.py" \
+#        "$YEAR" \
+#        --url    "$O3_URL" \
+#        --outdir "$O3_OUTDIR"
+#done
 
-conda deactivate
+#conda deactivate
 
 # ---------- Step 2: Build date list from downloaded CSV filenames ----------
-echo ""
-echo "### Step 2: Building date list from ozonesonde CSVs ###"
-ls "${O3_OUTDIR}"/ozonesonde_*.csv 2>/dev/null \
-    | sed -E 's/.*_([0-9]{8})\.csv$/\1/' \
-    | sed -E 's/^([0-9]{4})([0-9]{2})([0-9]{2})$/\1-\2-\3/' \
-    | sort -u > "$DATES_FILE"
+#echo ""
+#echo "### Step 2: Building date list from ozonesonde CSVs ###"
+#ls "${O3_OUTDIR}"/ozonesonde_*.csv 2>/dev/null \
+#    | sed -E 's/.*_([0-9]{8})\.csv$/\1/' \
+#    | sed -E 's/^([0-9]{4})([0-9]{2})([0-9]{2})$/\1-\2-\3/' \
+#    | sort -u > "$DATES_FILE"
 
-N_DATES=$(wc -l < "$DATES_FILE")
-echo "Found $N_DATES distinct ozonesonde flight dates."
+#N_DATES=$(wc -l < "$DATES_FILE")
+#echo "Found $N_DATES distinct ozonesonde flight dates."
 
-if [ "$N_DATES" -le 0 ]; then
-    echo "No ozonesonde profiles found — skipping ERA5/MERRA-2 download."
-    exit 0
-fi
+#if [ "$N_DATES" -le 0 ]; then
+#    echo "No ozonesonde profiles found — skipping ERA5/MERRA-2 download."
+#    exit 0
+#fi
 
 # ---------- Step 3: ERA5 for those dates ----------
 conda activate e5

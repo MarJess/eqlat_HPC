@@ -37,7 +37,7 @@ def get_o3_file_paths(url, year):
 
     exts = ('.dat',)
 
-    response = requests.get(url)
+    response = requests.get(url, timeout=30)
     soup = BeautifulSoup(response.text, 'html.parser')
 
     files = [
@@ -92,7 +92,7 @@ def read_noaa_O3_url(base_path, file_name, to_csv=True, o3sonde_dir='.'):
 
     # DOWNLOAD (only happens if file doesn't exist locally)
     full_url = base_path.rstrip('/') + '/' + file_name.lstrip('/')
-    response = requests.get(full_url)
+    response = requests.get(full_url, timeout=30)
     response.raise_for_status()
 
     # PARSE METADATA
