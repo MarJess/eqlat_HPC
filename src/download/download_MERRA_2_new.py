@@ -359,17 +359,98 @@ def download_merra2_date_range(start_date, end_date, hours_utc=None,
 
 
 # ---------------------------------------------------------------------------
+#  Download for an explicit list of dates (e.g. GPS-ozonesonde manifest)
+# ---------------------------------------------------------------------------
+
+def download_merra2_for_dates(dates, outdir, hours_utc=None, variables=None,
+                               collection="M2I3NPASM", version="5.12.4",
+                               overwrite=False):
+    """
+    Download MERRA-2 for an explicit list of dates.
+
+    Parameters
+    ----------
+    dates : list of datetime.date | (year, month, day) tuples
+    outdir, hours_utc, variables, collection, version, overwrite :
+        see download_merra2()
+
+    Returns
+    -------
+    list of str : filepaths of the downloaded (or already-existing) files.
+    """
+    os.makedirs(outdir, exist_ok=True)
+
+    outfiles = []
+    for d in dates:
+        year, month, day = d if isinstance(d, tuple) else (d.year, d.month, d.day)
+        try:
+            f = download_merra2(
+                year, month, day,
+                hours_utc=hours_utc,
+                variables=variables,
+                collection=collection,
+                version=version,
+                outdir=outdir,
+                overwrite=overwrite,
+            )
+            outfiles.append(f)
+        except Exception as e:
+            print(f"  ERROR {year}-{month:02d}-{day:02d}: {e}")
+
+    return outfiles
+
+
+def _read_dates_file(path):
+    """
+    Read a list of dates from a manifest file.
+
+    Accepts either a CSV with a 'date' column (e.g. the GPS-ozonesonde
+    manifest written by download_ozonesondes.py) or a plain text file with
+    one YYYY-MM-DD date per line.
+
+    Returns
+    -------
+    list of datetime.date
+    """
+    import csv
+
+    date_strs = []
+    if path.lower().endswith('.csv'):
+        with open(path, newline='') as fh:
+            reader = csv.DictReader(fh)
+            col = 'date' if (reader.fieldnames and 'date' in reader.fieldnames) \
+                else (reader.fieldnames[0] if reader.fieldnames else None)
+            if col is not None:
+                date_strs = [row[col] for row in reader]
+    else:
+        with open(path) as fh:
+            date_strs = [line.strip() for line in fh if line.strip()]
+
+    return [datetime.strptime(s, "%Y-%m-%d").date() for s in date_strs]
+
+
+# ---------------------------------------------------------------------------
 #  CLI entry point
 # ---------------------------------------------------------------------------
 def main():
-    """Download MERRA-2 EPV and T for every day in a given year."""
+    """Download MERRA-2 EPV and T for every day in a given year, or for a list of dates."""
     import argparse
     import calendar
 
     parser = argparse.ArgumentParser(
-        description="Download MERRA-2 PV and T on pressure levels for a full year."
+        description="Download MERRA-2 PV and T on pressure levels for a full year, "
+                     "or for a specific list of dates via --dates-file."
     )
-    parser.add_argument("year", type=int, help="Year to download, e.g. 2023")
+    parser.add_argument(
+        "year", type=int, nargs="?", default=None,
+        help="Year to download, e.g. 2023 (omit when using --dates-file)"
+    )
+    parser.add_argument(
+        "--dates-file", type=str, default=None,
+        help="CSV with a 'date' column, or a text file with one YYYY-MM-DD "
+             "date per line (e.g. a GPS-ozonesonde manifest). "
+             "Downloads only these dates instead of a full year."
+    )
     parser.add_argument(
         "--outdir", type=str,
         default=os.environ.get("DATA", ".") + "/MERRA2",
@@ -391,11 +472,32 @@ def main():
     )
     args = parser.parse_args()
 
-    year   = args.year
     outdir = args.outdir
     os.makedirs(outdir, exist_ok=True)
-
     hours_str = "all" if args.hours is None else f"{args.hours} UTC"
+
+    if args.dates_file:
+        dates = _read_dates_file(args.dates_file)
+        print(f"=== MERRA-2 download for {len(dates)} dates from {args.dates_file} ===")
+        print(f"    Collection : {args.collection}")
+        print(f"    Variables  : {args.variables}")
+        print(f"    Hours      : {hours_str}")
+        print(f"    Output dir : {outdir}")
+
+        download_merra2_for_dates(
+            dates, outdir,
+            hours_utc=args.hours,
+            variables=args.variables,
+            collection=args.collection,
+        )
+
+        print(f"=== Finished MERRA-2 download for {len(dates)} dates ===")
+        return
+
+    if args.year is None:
+        parser.error("Either 'year' or --dates-file must be given.")
+
+    year = args.year
     print(f"=== MERRA-2 download for year {year} ===")
     print(f"    Collection : {args.collection}")
     print(f"    Variables  : {args.variables}")
