@@ -58,8 +58,8 @@ try:
 except ImportError:
     _HAS_XR = False
 
-# Add the project root to sys.path so 'eqlat' package can be imported
-sys.path.insert(0, os.path.join(os.environ.get("HOME", ""), "eqlat_HPC"))
+# Add src/ to sys.path so the 'eqlat' package (at eqlat_HPC/src/eqlat/) can be imported
+sys.path.insert(0, os.path.join(os.environ.get("HOME", ""), "eqlat_HPC", "src"))
 from eqlat.interpolation import potential_temperature
 
 
