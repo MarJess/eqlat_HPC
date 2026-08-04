@@ -87,8 +87,8 @@ echo "### Step 1/3: ERA5 eqlat fields ###"
 python "${HOME}/eqlat_HPC/src/calc/process_fields.py" \
     --indir  "$ERA5_INDIR" \
     --outdir "$ERA5_EQLAT_OUTDIR" \
-    --model  ERA5 \
-    --roi
+    --model  ERA5 #\
+    #--roi
 
 # ---------- Step 2: MERRA-2 eqlat fields ----------
 echo ""
@@ -96,8 +96,8 @@ echo "### Step 2/3: MERRA-2 eqlat fields ###"
 python "${HOME}/eqlat_HPC/src/calc/process_fields.py" \
     --indir  "$MERRA2_INDIR" \
     --outdir "$MERRA2_EQLAT_OUTDIR" \
-    --model  MERRA2 \
-    --roi
+    --model  MERRA2 #\
+    #--roi
 
 # ---------- Step 3: Match ozonesonde profiles to eqlat fields ----------
 echo ""
