@@ -96,6 +96,8 @@ _LON_NAMES   = ("longitude", "lon", "nlon", "x")
 _PV_NAMES    = ("pv", "epv", "EPV", "PV", "ertel_pv", "q")
 _T_NAMES     = ("T", "t", "temperature", "temp", "ta", "air_temperature",
                 "TEMP", "Temperature")
+_O3_NAMES    = ("o3", "O3", "ozone", "ozone_mass_mixing_ratio",
+                "mass_fraction_of_ozone_in_air")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -128,6 +130,17 @@ def _find_var(ds, candidates: tuple[str, ...], label: str,
         f"Tried: {candidates}. "
         f"Set it explicitly via the '{label}_var' keyword."
     )
+
+
+def _find_var_optional(ds, candidates: tuple[str, ...],
+                       override: str | None = None) -> str | None:
+    """Like _find_var, but returns None instead of raising when absent."""
+    if override:
+        return override
+    for name in candidates:
+        if name in ds:
+            return name
+    return None
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -349,6 +362,8 @@ def process_pressure_netcdf(
     # variable overrides
     pv_var:   str | None = None,
     t_var:    str | None = None,
+    o3_var:   str | None = None,
+    include_o3: bool = True,
     # dimension overrides
     time_dim: str | None = None,
     plev_dim: str | None = None,
@@ -390,6 +405,18 @@ def process_pressure_netcdf(
         Name of the temperature variable (auto-detected from:
         'T', 't', 'temperature', 'temp', 'ta', 'air_temperature').
 
+    o3_var : str, optional
+        Name of the ozone variable (auto-detected from:
+        'o3', 'O3', 'ozone', 'ozone_mass_mixing_ratio',
+        'mass_fraction_of_ozone_in_air'). ERA5 pressure-level downloads
+        commonly include this alongside PV and T.
+
+    include_o3 : bool
+        If True (default), auto-detect and interpolate an ozone variable
+        when present in the file. If no ozone variable is found, it is
+        silently skipped (no error). Set to False to skip ozone entirely
+        even if present.
+
     time_dim, plev_dim, lat_dim, lon_dim : str, optional
         Dimension names (auto-detected).
 
@@ -420,6 +447,9 @@ def process_pressure_netcdf(
         Variable ``eqlat``  shape (time, theta, lat, lon)  [°N].
         Also contains ``pv_isentropic`` shape (time, theta, lat, lon)
         with the interpolated PV values [PVU] for diagnostics.
+        If an ozone variable was found (or ``o3_var`` was given), also
+        contains ``o3_isentropic`` shape (time, theta, lat, lon) with the
+        interpolated ozone values, in the file's native units.
 
     Notes
     -----
@@ -471,14 +501,18 @@ def process_pressure_netcdf(
     x_dim  = _find_dim(ds, _LON_NAMES,  "lon",     lon_dim)
     pv_name = _find_var(ds, _PV_NAMES,  "PV",      pv_var)
     t_name  = _find_var(ds, _T_NAMES,   "temperature", t_var)
+    o3_name = _find_var_optional(ds, _O3_NAMES, o3_var) if include_o3 else None
 
     # ── read coordinate arrays ─────────────────────────────────
     da_pv = ds[pv_name]
     da_T  = ds[t_name]
+    da_o3 = ds[o3_name] if o3_name is not None else None
 
     if time_slice is not None:
         da_pv = da_pv.isel({t_dim: time_slice})
         da_T  = da_T.isel({t_dim: time_slice})
+        if da_o3 is not None:
+            da_o3 = da_o3.isel({t_dim: time_slice})
 
     lat      = da_pv[y_dim].values.astype(np.float64)
     lon      = da_pv[x_dim].values.astype(np.float64)
@@ -494,11 +528,16 @@ def process_pressure_netcdf(
     print(f"Theta levels requested:  {theta_levels}")
     print(f"Grid: {n_lat} lat × {n_lon} lon,  {n_time} time steps")
     print(f"Total slices: {n_time} × {n_theta} = {total}")
+    if da_o3 is not None:
+        print(f"Ozone variable detected: '{o3_name}' — will interpolate to theta surfaces too.")
+    elif include_o3:
+        print("No ozone variable found in file — skipping (set o3_var explicitly if it has an unusual name).")
 
     # ── allocate outputs ───────────────────────────────────────
     eqlat_out = np.full((n_time, n_theta, n_lat, n_lon), np.nan,
                         dtype=np.float32)
     pv_iso_out = np.full_like(eqlat_out, np.nan)
+    o3_iso_out = np.full_like(eqlat_out, np.nan) if da_o3 is not None else None
 
     # ── progress bar ───────────────────────────────────────────
     _update, _close = _make_progress(
@@ -518,6 +557,11 @@ def process_pressure_netcdf(
         T_3d  = (da_T.isel({t_dim: ti})
                      .transpose(p_dim, y_dim, x_dim)
                      .values.astype(np.float64))
+        o3_3d = None
+        if da_o3 is not None:
+            o3_3d = (da_o3.isel({t_dim: ti})
+                          .transpose(p_dim, y_dim, x_dim)
+                          .values.astype(np.float64))
 
         for θi, theta_val in enumerate(theta_levels):
 
@@ -536,6 +580,20 @@ def process_pressure_netcdf(
                 continue
 
             pv_iso_out[ti, θi] = pv_iso.astype(np.float32)
+
+            # ── Step 1b: interpolate ozone to the same surface ─
+            if o3_3d is not None:
+                try:
+                    o3_iso = interpolate_to_theta_vectorized(
+                        o3_3d, T_3d, p_levels, theta_val,
+                        p0=p0, kappa=kappa,
+                    )
+                    o3_iso_out[ti, θi] = o3_iso.astype(np.float32)
+                except Exception as exc:
+                    warnings.warn(
+                        f"Ozone interpolation failed (t={ti}, θ={theta_val} K): {exc}",
+                        RuntimeWarning, stacklevel=2,
+                    )
 
             # ── Step 2: compute eqlat on the isentropic slice ──
             try:
@@ -575,6 +633,7 @@ def process_pressure_netcdf(
                     "source_file":  str(path),
                     "source_pv":    pv_name,
                     "source_T":     t_name,
+                    **({"source_o3": o3_name} if o3_name is not None else {}),
                 },
             ),
             "pv_isentropic": xr.DataArray(
@@ -593,6 +652,23 @@ def process_pressure_netcdf(
             ),
         }
     )
+
+    if o3_iso_out is not None:
+        result["o3_isentropic"] = xr.DataArray(
+            o3_iso_out,
+            dims=[t_dim, theta_dim_name, y_dim, x_dim],
+            coords={
+                t_dim:          times,
+                theta_dim_name: theta_arr,
+                y_dim:          lat,
+                x_dim:          lon,
+            },
+            attrs={
+                "long_name": "Ozone on isentropic surface",
+                "units":     ds[o3_name].attrs.get("units", "unknown"),
+                "source_o3": o3_name,
+            },
+        )
 
     ds.close()
     return result
